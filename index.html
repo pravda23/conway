@@ -1,34 +1,131 @@
 <!DOCTYPE html>
 <html>
-  <head> </head>
+  <head>
+    <style>
+      #container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 50px;
+      }
+
+      button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+        width: 50px;
+        margin: 5px;
+        background-color: salmon;
+        border-radius: 5px;
+        cursor: pointer;
+        color: white;
+        border: none;
+        font-size: xx-large;
+      }
+
+      .dead {
+        width: 5px;
+        height: 5px;
+        margin: 1px;
+        display: inline-block;
+      }
+      .alive {
+        width: 5px;
+        height: 5px;
+        /* margin: 1px 5px 5px 1px; */
+        display: inline-block;
+        background-color: salmon;
+      }
+
+      #speedRange {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 5px;
+        background: salmon;
+        border-radius: 5px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      #speedRange::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 30px;
+        height: 30px;
+        background: white;
+        border: 2px solid salmon;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      #speedRange::-moz-range-thumb {
+        width: 30px;
+        height: 30px;
+        background: white;
+        border: 2px solid salmon;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      #speedLabel {
+        font-family: "arial", sans-serif;
+        margin: 20px;
+        font-size: x-large;
+        color: salmon;
+      }
+    </style>
+  </head>
   <body>
-    <button onclick="randomizeState(size)" style="font-size: xx-large">
-      NEW
-    </button>
-    <button onclick="start()" style="font-size: xx-large">START</button>
-    <button onclick="stop()" style="font-size: xx-large">STOP</button>
-    <div id="grid"></div>
+    <div id="container">
+      <div id="button-container">
+        <button id="startStop" onclick="toggleStartStop(changeSpeed(speed))">
+          &#x25B6;
+        </button>
+        <button onclick="randomizeState(size)">&#x21BA;</button>
+      </div>
+      <div id="grid"></div>
+      <div style="margin-top: 40px">
+        <label id="speedLabel" for="speedRange">SPEED</label>
+        <input
+          type="range"
+          id="speedRange"
+          min="50"
+          max="250"
+          value="50"
+          step="1"
+          onchange="changeSpeed(this.value)"
+        />
+      </div>
+    </div>
   </body>
   <script type="text/javascript">
-    let size = 64;
-    const grid = document.getElementById("grid");
-    let button = document.querySelector("button");
-
     let state = [];
+    let size = 64;
+    let speed = 50;
     let numChecked;
+    const grid = document.getElementById("grid");
+    const startStopButton = document.getElementById("startStop");
 
     function renderGrid() {
-      // render checkbox values to grid
       for (let j = 0; j < size; j++) {
         const colUnit = document.createElement("div");
+        colUnit.style.height = "5px";
         grid.append(colUnit);
-
         for (let i = 0; i < size; i++) {
           const id = size * j + i;
           const rowUnit = document.createElement("span");
-
-          rowUnit.innerHTML = `<input type="checkbox"  ${
-            state[size * j + i] ? "checked" : null
+          rowUnit.style.margin = "0px 0px 0px 0px";
+          rowUnit.innerHTML = `<div class=${
+            state[size * j + i] ? "alive" : "dead"
           } id="${id}" />`;
 
           colUnit.append(rowUnit);
@@ -105,35 +202,45 @@
       ];
     }
 
-    let intervalId;
-
-    function start() {
-      if (!intervalId) {
-        intervalId = setInterval(() => {
-          updateState();
-        }, 10);
-      }
-    }
-
-    function stop() {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
-
-    // load random state on page load
-    randomizeState();
-
-    window.onkeypress = function (e) {
-      if ((e.key = "q")) {
-        randomizeState(size);
-      }
-
-      if (e.key === "w") {
-        start();
-      }
-      if (e.key === "eq") {
-        stop();
+    const changeSpeed = (newSpeed) => {
+      speed = 300 - newSpeed;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = setInterval(updateState, speed);
+        return speed;
       }
     };
+
+    let intervalId;
+
+    function toggleStartStop(changeSpeed) {
+      startStopButton.innerHTML = intervalId
+        ? `<span>&#x25B6;</span>`
+        : `<span>&#x23F8;</span>`;
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      } else {
+        if (!intervalId) {
+          intervalId = setInterval(() => {
+            updateState();
+          }, speed);
+        }
+      }
+    }
+
+    randomizeState();
+
+    // window.onkeypress = function (e) {
+    //   if ((e.key = "q")) {
+    //     randomizeState(size);
+    //   }
+
+    //   if (e.key === "w" && !intervalId) {
+    //     toggleStartStop();
+    //   } else if (e.key === "e" && intervalId) {
+    //     toggleStartStop();
+    //   }
+    // };
   </script>
 </html>
