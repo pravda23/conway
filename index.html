@@ -10,11 +10,12 @@
     <div id="grid"></div>
   </body>
   <script type="text/javascript">
-    let size = 128;
+    let size = 64;
     const grid = document.getElementById("grid");
     let button = document.querySelector("button");
 
     let state = [];
+    let numChecked;
 
     function renderGrid() {
       // render checkbox values to grid
@@ -60,7 +61,7 @@
       // generate random boolean state array
       for (let i = 0; i < size * size; i++) {
         randomNumber();
-        randomNum < (size * size) / 1.9 ? state.push(true) : state.push(false);
+        randomNum < (size * size) / 4 ? state.push(true) : state.push(false);
       }
 
       // delete any existing grid
@@ -68,29 +69,26 @@
     }
 
     function updateState() {
-      deleteGrid();
-      const checkboxes = document.querySelectorAll("input[type=checkbox]");
-
-      // loop through checkboxes, update state array based on checked status
-      checkboxes.forEach((checkbox) => {
-        const id = parseInt(checkbox.id);
-        state[id] = checkbox.checked;
-      });
-
-      // run ruleset on state array and update state array
+      const nextState = [];
 
       for (let i = 0; i < state.length; i++) {
         let numTrueNeighbors = 0;
-        let numFalseNeighbors = 0;
+
         getNeighbors(i).forEach((n) => {
-          if (n > 0) {
-            state[n] === false ? (numFalseNeighbors += 1) : null;
-            state[n] === true ? (numTrueNeighbors += 1) : null;
+          if (n >= 0 && n < state.length && state[n]) {
+            numTrueNeighbors++;
           }
         });
-        if (numTrueNeighbors == 2 || numTrueNeighbors > 4) state[i] = false;
-        if (numFalseNeighbors == 3) state[i] = true;
+
+        if (state[i]) {
+          nextState[i] = numTrueNeighbors === 2 || numTrueNeighbors === 3;
+        } else {
+          nextState[i] = numTrueNeighbors === 3;
+        }
       }
+
+      state = nextState;
+      deleteGrid();
       renderGrid();
     }
 
@@ -113,7 +111,7 @@
       if (!intervalId) {
         intervalId = setInterval(() => {
           updateState();
-        }, 200);
+        }, 10);
       }
     }
 
