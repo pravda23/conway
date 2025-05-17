@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head> </head>
+  <body>
+    <button onclick="randomizeState(size)" style="font-size: xx-large">
+      NEW
+    </button>
+    <button onclick="start()" style="font-size: xx-large">START</button>
+    <button onclick="stop()" style="font-size: xx-large">STOP</button>
+    <div id="grid"></div>
+  </body>
+  <script type="text/javascript">
+    let size = 128;
+    const grid = document.getElementById("grid");
+    let button = document.querySelector("button");
+
+    let state = [];
+
+    function renderGrid() {
+      // render checkbox values to grid
+      for (let j = 0; j < size; j++) {
+        const colUnit = document.createElement("div");
+        grid.append(colUnit);
+
+        for (let i = 0; i < size; i++) {
+          const id = size * j + i;
+          const rowUnit = document.createElement("span");
+
+          rowUnit.innerHTML = `<input type="checkbox"  ${
+            state[size * j + i] ? "checked" : null
+          } id="${id}" />`;
+
+          colUnit.append(rowUnit);
+        }
+      }
+    }
+
+    function deleteGrid() {
+      if (grid.hasChildNodes()) {
+        let grid = document.getElementById("grid");
+        while (grid.firstChild) {
+          grid.removeChild(grid.firstChild);
+        }
+      }
+    }
+
+    function randomNumber() {
+      return (randomNum = Math.floor(Math.random() * size * size));
+    }
+
+    function randomizeState() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+
+      if (state.length > 0) state = [];
+      deleteGrid();
+
+      // generate random boolean state array
+      for (let i = 0; i < size * size; i++) {
+        randomNumber();
+        randomNum < (size * size) / 1.9 ? state.push(true) : state.push(false);
+      }
+
+      // delete any existing grid
+      renderGrid(size);
+    }
+
+    function updateState() {
+      deleteGrid();
+      const checkboxes = document.querySelectorAll("input[type=checkbox]");
+
+      // loop through checkboxes, update state array based on checked status
+      checkboxes.forEach((checkbox) => {
+        const id = parseInt(checkbox.id);
+        state[id] = checkbox.checked;
+      });
+
+      // run ruleset on state array and update state array
+
+      for (let i = 0; i < state.length; i++) {
+        let numTrueNeighbors = 0;
+        let numFalseNeighbors = 0;
+        getNeighbors(i).forEach((n) => {
+          if (n > 0) {
+            state[n] === false ? (numFalseNeighbors += 1) : null;
+            state[n] === true ? (numTrueNeighbors += 1) : null;
+          }
+        });
+        if (numTrueNeighbors == 2 || numTrueNeighbors > 4) state[i] = false;
+        if (numFalseNeighbors == 3) state[i] = true;
+      }
+      renderGrid();
+    }
+
+    function getNeighbors(id) {
+      return [
+        id - (size - 1),
+        id - size,
+        id - (size + 1),
+        id - 1,
+        id + 1,
+        id + (size - 1),
+        id + size,
+        id + (size + 1),
+      ];
+    }
+
+    let intervalId;
+
+    function start() {
+      if (!intervalId) {
+        intervalId = setInterval(() => {
+          updateState();
+        }, 200);
+      }
+    }
+
+    function stop() {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+
+    // load random state on page load
+    randomizeState();
+
+    window.onkeypress = function (e) {
+      if ((e.key = "q")) {
+        randomizeState(size);
+      }
+
+      if (e.key === "w") {
+        start();
+      }
+      if (e.key === "eq") {
+        stop();
+      }
+    };
+  </script>
+</html>
