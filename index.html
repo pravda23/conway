@@ -2,8 +2,24 @@
 <html>
   <head>
     <style>
+      :root {
+        --main-color: salmon;
+        --accent-color: aquamarine;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        /* overflow: hidden; */
+      }
+
       #container {
         display: flex;
+        height: fit-content;
+        width: fit-content;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -13,65 +29,75 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 50px;
+        padding: 10px;
+        background-color: white;
+        border-radius: 20px;
+        z-index: 1;
       }
 
       button {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 50px;
-        width: 50px;
+        height: 100px;
+        width: 100px;
         margin: 5px;
-        background-color: salmon;
-        border-radius: 5px;
+        background-color: var(--main-color);
+        border-radius: 20px;
         cursor: pointer;
         color: white;
         border: none;
-        font-size: xx-large;
+        font-size: 50px;
+      }
+
+      #grid {
+        display: flex;
+        /* grid-template-columns: repeat(64, 10px); */
+        /* grid-template-rows: repeat(64, 10px); */
+        /* gap: 0; */
       }
 
       .dead {
-        width: 5px;
-        height: 5px;
-        margin: 1px;
+        width: 10px;
+        height: 10px;
+        /* margin: 1vw; */
         display: inline-block;
       }
       .alive {
-        width: 5px;
-        height: 5px;
-        /* margin: 1px 5px 5px 1px; */
+        width: 10px;
+        height: 10px;
         display: inline-block;
-        background-color: salmon;
+        background-color: var(--main-color);
       }
 
-      #speedRange {
+      .slider {
         -webkit-appearance: none;
         appearance: none;
         width: 100%;
         height: 5px;
-        background: salmon;
+        background: var(--main-color);
         border-radius: 5px;
         outline: none;
         cursor: pointer;
       }
 
-      #speedRange::-webkit-slider-thumb {
+      .slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
         width: 30px;
         height: 30px;
         background: white;
-        border: 2px solid salmon;
+        border: 2px solid var(--main-color);
         border-radius: 50%;
         cursor: pointer;
       }
 
-      #speedRange::-moz-range-thumb {
+      .slider::-moz-range-thumb {
         width: 30px;
         height: 30px;
         background: white;
-        border: 2px solid salmon;
+        border: 2px solid var(--main-color);
         border-radius: 50%;
         cursor: pointer;
       }
@@ -80,40 +106,49 @@
         font-family: "arial", sans-serif;
         margin: 20px;
         font-size: x-large;
-        color: salmon;
+        color: var(--main-color);
       }
     </style>
   </head>
   <body>
     <div id="container">
       <div id="button-container">
-        <button id="startStop" onclick="toggleStartStop(changeSpeed(speed))">
-          &#x25B6;
+        <button
+          id="startStopButton"
+          onclick="toggleStartStop(changeSpeedWithSlider(speed))"
+        >
+          <span style="margin-bottom: 5px; font-size: 40px">&#x25B6;</span>
         </button>
         <button onclick="randomizeState(size)">&#x21BA;</button>
+        <div style="display: flex">
+          <div style="margin: 20px">
+            <label id="speedLabel" for="speedRange">SPEED</label>
+            <input
+              type="range"
+              id="speedRange"
+              class="slider"
+              min="50"
+              max="500"
+              value="50"
+              step="20"
+              onchange="changeSpeedWithSlider(this.value)"
+            />
+          </div>
+        </div>
       </div>
+
       <div id="grid"></div>
-      <div style="margin-top: 40px">
-        <label id="speedLabel" for="speedRange">SPEED</label>
-        <input
-          type="range"
-          id="speedRange"
-          min="50"
-          max="250"
-          value="50"
-          step="1"
-          onchange="changeSpeed(this.value)"
-        />
-      </div>
     </div>
   </body>
   <script type="text/javascript">
     let state = [];
+    let isPlaying = false;
     let size = 64;
-    let speed = 50;
+    let speed = 20;
     let numChecked;
+    let intervalId;
     const grid = document.getElementById("grid");
-    const startStopButton = document.getElementById("startStop");
+    const startStopButton = document.getElementById("startStopButton");
 
     function renderGrid() {
       for (let j = 0; j < size; j++) {
@@ -147,9 +182,10 @@
     }
 
     function randomizeState() {
+      console.log(isPlaying);
       if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
+        toggleStartStop();
+        // stop();
       }
 
       if (state.length > 0) state = [];
@@ -163,6 +199,8 @@
 
       // delete any existing grid
       renderGrid(size);
+
+      stop();
     }
 
     function updateState() {
@@ -185,6 +223,7 @@
       }
 
       state = nextState;
+
       deleteGrid();
       renderGrid();
     }
@@ -202,7 +241,7 @@
       ];
     }
 
-    const changeSpeed = (newSpeed) => {
+    const changeSpeedWithSlider = (newSpeed) => {
       speed = 300 - newSpeed;
       if (intervalId) {
         clearInterval(intervalId);
@@ -211,15 +250,18 @@
       }
     };
 
-    let intervalId;
+    function stop() {
+      clearInterval(intervalId);
+      intervalId = null;
+      isPlaying = false;
+    }
 
-    function toggleStartStop(changeSpeed) {
-      startStopButton.innerHTML = intervalId
-        ? `<span>&#x25B6;</span>`
-        : `<span>&#x23F8;</span>`;
+    function toggleStartStop() {
+      selectStartStopIcon();
+      isPlaying = !isPlaying;
+
       if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
+        stop();
       } else {
         if (!intervalId) {
           intervalId = setInterval(() => {
@@ -229,18 +271,35 @@
       }
     }
 
+    function selectStartStopIcon() {
+      return !isPlaying
+        ? (startStopButton.innerHTML = `<span style="margin-bottom:12px">&#x23F8;</span>`)
+        : (startStopButton.innerHTML = `<span style="margin-bottom:5px; font-size: 40px">&#x25B6;</span>`);
+    }
+
     randomizeState();
+    console.log("isPlaying", isPlaying);
 
-    // window.onkeypress = function (e) {
-    //   if ((e.key = "q")) {
-    //     randomizeState(size);
-    //   }
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Space") {
+        e.preventDefault();
+        toggleStartStop();
+      }
+    });
 
-    //   if (e.key === "w" && !intervalId) {
-    //     toggleStartStop();
-    //   } else if (e.key === "e" && intervalId) {
-    //     toggleStartStop();
-    //   }
-    // };
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Period") {
+        e.preventDefault();
+        speed -= 100;
+        console.log("speed", speed);
+      }
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.code === "Comma") {
+        e.preventDefault();
+        speed += 100;
+        console.log("speed", speed);
+      }
+    });
   </script>
 </html>
